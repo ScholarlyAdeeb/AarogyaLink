@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AarogyaLink - Your Personal Health Companion</title>
+    <!-- Favicon and fonts -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚕️</text></svg>">
+    <!-- Google Material Symbols CDN -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    
+    <!-- TensorFlow.js and Teachable Machine Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Link to the custom macOS Tahoe Stylesheet via Flask static URL -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced_styles.css') }}">
+</head>
+<body>
+
+    <!-- 1. HARDWARE-ACCELERATED FLUID BACKDROP -->
+    <div id="fluid-canvas-container">
+        <div id="parallax-glow-wrapper">
+            <!-- Profile A: English / Default -->
+            <div id="profile-a-wrapper" class="profile-wrapper active">
+                <div class="glow-orb orb-1"></div>
+                <div class="glow-orb orb-2"></div>
+                <div class="glow-orb orb-3"></div>
+                <div class="glow-orb orb-4"></div>
+            </div>
+            <!-- Profile B: Hindi -->
+            <div id="profile-b-wrapper" class="profile-wrapper">
+                <div class="glow-orb orb-1"></div>
+                <div class="glow-orb orb-2"></div>
+                <div class="glow-orb orb-3"></div>
+                <div class="glow-orb orb-4"></div>
+            </div>
+            <!-- Profile C: Other languages -->
+            <div id="profile-c-wrapper" class="profile-wrapper">
+                <div class="glow-orb orb-1"></div>
+                <div class="glow-orb orb-2"></div>
+                <div class="glow-orb orb-3"></div>
+                <div class="glow-orb orb-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 10-LANGUAGE WELCOME GATE INITIALIZATION STATE MACHINE -->
+    <div id="welcome-gate">
+        <!-- Glowing Diagnostic Orb -->
+        <div class="mb-8" style="margin-bottom: 32px;">
+            <div id="welcome-orb" class="orb-pulsing"></div>
+        </div>
+        
+        <!-- Rotating Translation Ticker -->
+        <div style="height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 32px; padding: 0 20px;">
+            <h1 id="ticker-text" class="fade-in" style="font-size: 2.2rem; font-weight: 700; text-align: center; color: #ffffff; max-width: 800px;">
+                How can I help with your health today?
+            </h1>
+        </div>
+        
+        <!-- Language choice capsules row -->
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; max-width: 800px; padding: 0 24px;">
+            <button onclick="selectLanguage('en')" class="lang-capsule">English</button>
+            <button onclick="selectLanguage('hi')" class="lang-capsule">हिन्दी</button>
+            <button onclick="selectLanguage('ta')" class="lang-capsule">தமிழ்</button>
+            <button onclick="selectLanguage('bn')" class="lang-capsule">বাংলা</button>
+            <button onclick="selectLanguage('te')" class="lang-capsule">తెలుగు</button>
+            <button onclick="selectLanguage('mr')" class="lang-capsule">मराठी</button>
+            <button onclick="selectLanguage('kn')" class="lang-capsule">ಕನ್ನಡ</button>
+            <button onclick="selectLanguage('gu')" class="lang-capsule">ગુજરાતી</button>
+            <button onclick="selectLanguage('pa')" class="lang-capsule">ਪੰਜਾਬੀ</button>
+            <button onclick="selectLanguage('ml')" class="lang-capsule">മലയാളം</button>
+        </div>
+    </div>
+
+    <!-- 3. MAIN CONCISE CONSOLE WORKSPACE (macOS Tahoe Glass Layers) -->
+    <div id="main-console">
+        <!-- Sidebar - Left Panel (Conversation History) -->
+        <aside id="console-sidebar" class="glass-panel">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <div id="console-orb" class="orb-pulsing"></div>
+                <div>
+                    <h2 data-i18n="title" class="brand-title">AarogyaLink</h2>
+                    <span data-i18n="subtitle" class="brand-subtitle">Your Health Companion</span>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="sidebar-quick-actions">
+                <button onclick="startNewChat()" class="glass-btn glass-btn-primary" style="width: 100%; justify-content: center; margin-bottom: 12px;">
+                    <span class="material-symbols-outlined">add</span>
+                    <span data-i18n="sidebarNewChat">New Chat</span>
+                </button>
+            </div>
+            
+            <span data-i18n="sidebarHistory" class="history-section-title">Conversation History</span>
+            <!-- History List Container -->
+            <div id="history-list-container" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto;">
+                <!-- Dynamically populated -->
+            </div>
+            
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <span style="font-size: 11px; color: var(--text-tertiary); opacity: 0.6;">AarogyaLink · AI Health Companion</span>
+            </div>
+        </aside>
+
+        <!-- Header - Top Panel (Title & Actions) -->
+        <header id="console-header" class="glass-panel">
+            <div class="brand-identity">
+                <h2 data-i18n="title" class="brand-title">AarogyaLink</h2>
+                <div style="width: 1px; height: 16px; background: rgba(255, 255, 255, 0.15); margin: 0 4px;"></div>
+                <span data-i18n="subtitle" class="brand-subtitle">Your Personal Health Companion</span>
+            </div>
+            
+            <!-- Global actions (Theme and reset) -->
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button onclick="toggleTheme()" class="glass-btn" style="padding: 8px;" aria-label="Toggle Light/Dark Theme">
+                    <span id="theme-toggle-icon" class="material-symbols-outlined">light_mode</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Conversational Feed Area -->
+        <main id="console-main">
+            <!-- Chat message logs -->
+            <div id="chat-viewport-wrapper" class="glass-panel">
+                <!-- Message items appended here -->
+            </div>
+
+            <!-- Bottom input controls & Action panels -->
+            <div id="console-input-tray">
+                
+                <!-- Single Premium "Analyse Skin Problem" HUD Action Panel -->
+                <div id="skin-hud-panel" class="glass-panel" style="padding: 12px 16px; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                        <button onclick="triggerFileInput()" class="glass-btn" style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); padding: 8px 16px;">
+                            <span class="material-symbols-outlined" style="font-size: 18px; margin-right: 6px;">image_search</span>
+                            <span data-i18n="hudTitle" style="font-weight: 500;">Analyse Skin Problem</span>
+                        </button>
+                        <input type="file" id="skin-file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                        
+                        <div id="model-badge" class="glass-btn" style="font-size: 11px; padding: 4px 10px; cursor: default; opacity: 0.8; border: none; background: transparent;">
+                            Loading AI weights...
+                        </div>
+                    </div>
+                    
+                    <!-- Preview and predicted classification status bar (Hidden by default) -->
+                    <div id="hud-preview-area" style="display: none; grid-template-columns: auto 1fr; gap: 12px; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.06); margin-top: 10px; padding-top: 10px;">
+                        <img id="skin-preview-img" src="" alt="Skin Preview" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        
+                        <div class="micro-frosted-status-bar" style="flex: 1; padding: 6px 12px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);">
+                            <div class="status-text-container" style="display: flex; flex-direction: column;">
+                                <span data-i18n="statusLabel" class="status-label" style="font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary);">Skin Condition Detected</span>
+                                <span id="skin-status-value" class="status-value" style="font-size: 13px; font-weight: 600; color: var(--text-primary);">HEALTHY</span>
+                            </div>
+                            
+                            <button id="add-to-chat-btn" class="glass-btn glass-btn-primary" style="padding: 6px 12px; font-size: 12px; border-radius: 8px;">
+                                <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">chat_bubble</span>
+                                <span data-i18n="addToChat">Add to Chat</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Capsule -->
+                <div id="input-capsule-container" class="glass-panel">
+                    <!-- Textarea for composing query -->
+                    <textarea id="messageInput" data-i18n-placeholder="placeholder" placeholder="Ask anything about your health..." 
+                              onkeydown="handleInputKeyPress(event)" onfocus="setInputFocus(true)" onblur="setInputFocus(false)"></textarea>
+                    
+                    <div class="input-controls">
+                        <!-- Inline Language Selector dropdown inside input border -->
+                        <div class="language-selector-wrapper">
+                            <button id="inline-lang-trigger" onclick="toggleInlineLangDropdown(event)" class="input-icon-btn" aria-label="Select Language">
+                                <span class="material-symbols-outlined">language</span>
+                            </button>
+                            <!-- Dropdown options -->
+                            <div id="inline-lang-dropdown" class="glass-panel">
+                                <div onclick="selectLanguageInline('en')" class="lang-dropdown-option active" id="opt-en">English 🇺🇸</div>
+                                <div onclick="selectLanguageInline('hi')" class="lang-dropdown-option" id="opt-hi">हिन्दी 🇮🇳</div>
+                                <div onclick="selectLanguageInline('ta')" class="lang-dropdown-option" id="opt-ta">தமிழ் 🇮🇳</div>
+                                <div onclick="selectLanguageInline('bn')" class="lang-dropdown-option" id="opt-bn">বাংলা 🇮🇳</div>
+                                <div onclick="selectLanguageInline('te')" class="lang-dropdown-option" id="opt-te">తెలుగు 🇮🇳</div>
+                                <div onclick="selectLanguageInline('mr')" class="lang-dropdown-option" id="opt-mr">मराठी 🇮🇳</div>
+                                <div onclick="selectLanguageInline('kn')" class="lang-dropdown-option" id="opt-kn">ಕನ್ನಡ 🇮🇳</div>
+                                <div onclick="selectLanguageInline('gu')" class="lang-dropdown-option" id="opt-gu">ગુજરાતી 🇮🇳</div>
+                                <div onclick="selectLanguageInline('pa')" class="lang-dropdown-option" id="opt-pa">ਪੰਜਾਬੀ 🇮🇳</div>
+                                <div onclick="selectLanguageInline('ml')" class="lang-dropdown-option" id="opt-ml">മലയാളം 🇮🇳</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Send submission trigger -->
+                        <button id="send-msg-btn" onclick="sendTextMessage()" class="input-icon-btn" aria-label="Send Message">
+                            <span class="material-symbols-outlined">arrow_upward</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- 4. CORE ENGINE SCRIPT BLOCK -->
+    <script>
+        // ==========================================
+        // CONFIG & STATE MANAGEMENT
+        // ==========================================
+        const API_BASE_URL = window.location.origin;
+        const MODEL_BASE = "https://teachablemachine.withgoogle.com/models/ebiM39JYb/";
+        
+        let teachableModel = null;
+        let isModelLoaded = false;
+        let tickerInterval = null;
+        let currentLanguage = 'en';
+        let currentChatId = null;
+        let conversations = {};
+
+        // 10-Language Greeting Phrases for Welcome Ticker
+        const tickerPhrases = [
+            { text: "How can I help with your health today?", lang: "en" },
+            { text: "आज मैं आपके स्वास्थ्य में क्या सहायता कर सकता हूँ?", lang: "hi" },
+            { text: "இன்று உங்கள் ஆரோக்கியத்திற்கு நான் எவ்வாறு உதவ முடியும்?", lang: "ta" },
+            { text: "আজ আমি আপনার স্বাস্থ্যের কীভাবে সাহায্য করতে পারি?", lang: "bn" },
+            { text: "ఈరోజు మీ ఆరోగ్యానికి నేను ఎలా సహాయపడగలను?", lang: "te" },
+            { text: "आज मी तुमच्या आरोग्यासाठी कशी मदत करू शकतो?", lang: "mr" },
+            { text: "ಇಂದು ನಿಮ್ಮ आरोग्यಕ್ಕೆ ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?", lang: "kn" },
+            { text: "આજે હું તમારા સ્વાસ્થ્યમાં કેવી રીતે મદદ કરી શકું?", lang: "gu" },
+            { text: "ਅੱਜ ਮੈਂ ਤੁਹਾਡੀ ਸਿਹਤ ਵਿੱਚ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?", lang: "pa" },
+            { text: "ഇന്ന് നിങ്ങളുടെ ആരോഗ്യത്തിന് എനിക്ക് എങ്ങനെ സഹായിക്കാനാകും?", lang: "ml" }
+        ];
+
+        // 10-Language Localization Dictionary
+        const LOCALIZATION = {
+            en: {
+                title: "AarogyaLink",
+                subtitle: "Your Personal Health Companion",
+                placeholder: "Ask anything about your health...",
+                sidebarHistory: "Conversation History",
+                sidebarNewChat: "New Chat",
+                hudTitle: "Analyse Skin Problem",
+                hudDesc: "Upload an image of the affected area to predict skin condition locally.",
+                dropzoneText: "Drag & drop an image here or click to select",
+                addToChat: "Add to Chat",
+                welcomeMsg: "Hello! I am AarogyaLink, your AI health companion. How can I help you today?",
+                aiDiagnosis: "AI Diagnosis",
+                statusLabel: "Skin Analysis Result"
+            },
+            hi: {
+                title: "आरोग्यलिंक",
+                subtitle: "आपका व्यक्तिगत स्वास्थ्य साथी",
+                placeholder: "अपने स्वास्थ्य के बारे में कुछ भी पूछें...",
+                sidebarHistory: "वार्तालाप इतिहास",
+                sidebarNewChat: "नया चैट",
+                hudTitle: "त्वचा की समस्या का विश्लेषण करें",
+                hudDesc: "स्थानीय स्तर पर त्वचा की स्थिति का अनुमान लगाने के लिए प्रभावित क्षेत्र की एक छवि अपलोड करें।",
+                dropzoneText: "छवि को यहाँ खींचें और छोड़ें या चुनने के लिए क्लिक करें",
+                addToChat: "चैट में जोड़ें",
+                welcomeMsg: "नमस्ते! मैं आरोग्यलिंक हूँ, आपका एआई स्वास्थ्य साथी। आज मैं आपकी क्या सहायता कर सकता हूँ?",
+                aiDiagnosis: "एआई निदान",
+                statusLabel: "त्वचा विश्लेषण परिणाम"
+            },
+            ta: {
+                title: "ஆரோக்யலிங்க்",
+                subtitle: "உங்கள் தனிப்பட்ட சுகாதார துணை",
+                placeholder: "உங்கள் ஆரோக்கியத்தைப் பற்றி ஏਦੇனும் கேளுங்கள்...",
+                sidebarHistory: "உரையாடல் வரலாறு",
+                sidebarNewChat: "புதிய அரட்டை",
+                hudTitle: "சருமப் பிரச்சினையை பகுப்பாய்வு செய்க",
+                hudDesc: "உள்ளூர் அளவில் சரும நிலையை கணிக்க பாதிக்கப்பட்ட பகுதியின் படத்தை பதிവേற்றவும்.",
+                dropzoneText: "படത്തെ இங்கே இழுத்து விடவும் அல்லது தேர்ந்தெடுக்க கிளிக் செய்யவும்",
+                addToChat: "அரட்டையில் சேர்",
+                welcomeMsg: "வணக்கம்! நான் ஆரோக்யலிங்க், உங்கள் ஏஐ சுகாதார துணை. இன்று நான் உங்களுக்கு எவ்வாறு உதവ முடியும்?",
+                aiDiagnosis: "ஏஐ கண்டறிதல்",
+                statusLabel: "சரும பகுப்பாய்வு முடிவு"
+            },
+            bn: {
+                title: "আরোগ্যলিঙ্ক",
+                subtitle: "আপনার ব্যক্তিগত স্বাস্থ্য সঙ্গী",
+                placeholder: "আপনার স্বাস্থ্য সম্পর্কে কিছু জিজ্ঞাসা করুন...",
+                sidebarHistory: "কথোপকথনের ইতিহাস",
+                sidebarNewChat: "নতুন চ্যাট",
+                hudTitle: "ত্বকের সমস্যা বিশ্লেষণ করুন",
+                hudDesc: "স্থানীয়ভাবে ত্বকের অবস্থা অনুমান করতে প্রভাবিত এলাকার একটি ছবি আপলোড করুন।",
+                dropzoneText: "ছবিটি এখানে টেনে এনে ছেড়ে দিন অথবা নির্বাচন করতে ক্লিক করুন",
+                addToChat: "চ্যাটে যুক্ত করুন",
+                welcomeMsg: "হ্যালো! আমি আরোগ্যলিঙ্ক, আপনার এআই স্বাস্থ্য সঙ্গী। আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
+                aiDiagnosis: "এআই রোগ নির্ণয়",
+                statusLabel: "ত্বক विश्लेषण ফলাফল"
+            },
+            te: {
+                title: "ఆరోగ్యలింక్",
+                subtitle: "మీ వ్యక్తిగత ఆరోగ్య భాగస్వామి",
+                placeholder: "మీ ఆరోగ్యం గురించి ఏదైనా అడగండి...",
+                sidebarHistory: "సంభాషణ చరిత్ర",
+                sidebarNewChat: "కొత్త చాట్",
+                hudTitle: "చర్మ సమస్యను విశ్లేషించండి",
+                hudDesc: "స్థానికంగా చర్మ పరిస్థితిని అంచనా వేయడానికి ప్రభావిత ప్రాంతం యొక్క చిత്രാన్ని అప్‌లోడ్ చేయండి।",
+                dropzoneText: "చిత്രാన్ని ఇక్కడ లాగి వదలండి లేదా ఎంచుకోవడానికి క్లిక్ చేయండి",
+                addToChat: "చాట్‌కు జోడించు",
+                welcomeMsg: "నమస్తే! నేను ఆరోగ్యలింక్, మీ ఏఐ ఆరోగ్య భాగస్వామి. ఈ రోజు నేను మీకు ఎలా సహాయపడగలను?",
+                aiDiagnosis: "ఏఐ రోగ నిర్ధారణ",
+                statusLabel: "చర్మ విశ్లేషణ ఫలితం"
+            },
+            mr: {
+                title: "आरोग्यलिंक",
+                subtitle: "तुमचा वैयक्तिक आरोग्य सोबती",
+                placeholder: "तुमच्या आरोग्याबद्दल काहीही विचारा...",
+                sidebarHistory: "संभाषण इतिहास",
+                sidebarNewChat: "नवीन चॅट",
+                hudTitle: "त्वचेच्या समस्येचे विश्लेषण करा",
+                hudDesc: "त्वचेच्या स्थितीचा अंदाज घेण्यासाठी प्रभावित भागाचा फोटो अपलोड करा.",
+                dropzoneText: "इमेज येथे ड्रॅग आणि ड्रॉप करा किंवा निवडण्यासाठी क्लिक करा",
+                addToChat: "चॅटमध्ये जोडा",
+                welcomeMsg: "नमस्कार! मी आरोग्यलिंक आहे, तुमचा एआय आरोग्य सोबती. आज मी तुम्हाला कशी मदत करू शकेन?",
+                aiDiagnosis: "एआय निदान",
+                statusLabel: "त्वचा विश्लेषण निकाल"
+            },
+            kn: {
+                title: "ಆರೋಗ್ಯಲಿಂಕ್",
+                subtitle: "ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಆರೋಗ್ಯ ಒಡನಾಡಿ",
+                placeholder: "ನಿಮ್ಮ ಆರೋಗ್ಯದ ಬಗ್ಗೆ ಏನನ್ನಾದರೂ ಕೇಳಿ...",
+                sidebarHistory: "ಸಂಭಾಷಣೆಯ ಇತಿಹಾಸ",
+                sidebarNewChat: "ಹೊಸ ਚಾಟ್",
+                hudTitle: "ಚರ್ಮದ ಸಮಸ್ಯೆಯನ್ನು ವಿಶ್ಲೇಷಿಸಿ",
+                hudDesc: "ಸ್ಥಳೀಯವಾಗಿ ಚರ್ಮದ ಸ್ಥಿತಿಯನ್ನು ಊಹಿಸಲು ಪೀಡಿತ ಪ್ರದೇಶದ ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
+                dropzoneText: "ಚಿತ್ರವನ್ನು ಇಲ್ಲಿಗೆ ಎಳೆಯಿರಿ ಮತ್ತು ಬಿಡಿ અથવા ಆಯ್ಕೆ ಮಾಡಲು ಕ್لیಕ್ ಮಾಡಿ",
+                addToChat: "ಚಾಟ್‌ಗೆ ಸೇರಿಸಿ",
+                welcomeMsg: "ನಮಸ್ಕಾರ! ನಾನು आरोग्यलिंक, ನಿಮ್ಮ ಎಐ ಆರೋಗ್ಯ ಒಡನಾಡಿ. ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+                aiDiagnosis: "ಎಐ ರೋಗನಿರ್ಣಯ",
+                statusLabel: "ಚರ್ಮ ವಿಶ್ಲೇಷಣೆ ಫಲಿತಾಂಶ"
+            },
+            gu: {
+                title: "આરોગ્યલિંક",
+                subtitle: "તમારા વ્યક્તિગત સ્વાસ્થ્ય સાથી",
+                placeholder: "તમારા સ્વાસ્થ્ય વિશે કંઈપણ પૂછો...",
+                sidebarHistory: "વાતચીત ઇતિહાસ",
+                sidebarNewChat: "નવી ચેટ",
+                hudTitle: "ત્વચાની સમસ્યાનું વિશ્લેષણ કરો",
+                hudDesc: "સ્થાનિક સ્તરે ત્વચાની સ્થિતિની આગાહી કરવા માટે અસરગ્રસ્ત વિસ્તારની છબી અપલોડ કરો.",
+                dropzoneText: "ઇમેજ અહીં ખેંચો અને છોડો અથવા પસંદ કરવા માટે ક્લિક કરો",
+                addToChat: "ચેટમાં ઉમેરો",
+                welcomeMsg: "નમસ્તે! હું આરોગ્યલિંક છું, તમારા એઆઈ સ્વાસ્થ્ય સાથી. આજે હું તમને કેવી રીતે મદદ કરી શકું?",
+                aiDiagnosis: "એઆઈ નિદાન",
+                statusLabel: "ત્વચા વિશ્લેષણ પરિણામ"
+            },
+            pa: {
+                title: "ਅਰੋਗਿਆਲਿੰਕ",
+                subtitle: "ਤੁਹਾਡਾ ਨਿੱਜੀ ਸਿਹਤ ਸਾਥੀ",
+                placeholder: "ਆਪਣੀ ਸਿਹਤ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ...",
+                sidebarHistory: "ਗੱਲਬਾਤ ਦਾ ਇਤਿਹਾਸ",
+                sidebarNewChat: "ਨਵੀਂ ਚੈਟ",
+                hudTitle: "ਚਮੜੀ ਦੀ ਸਮੱਸਿਆ ਦਾ ਵਿਸ਼ਲੇਸ਼ਣ ਕਰੋ",
+                hudDesc: "ਸਥਾਨਕ ਤੌਰ 'ਤੇ ਚਮੜੀ ਦੀ ਸਥਿਤੀ ਦਾ ਅੰਦਾਜ਼ਾ ਲਗਾਉਣ ਲਈ ਪ੍ਰਭਾਵਿਤ ਖੇਤਰ ਦੀ ਤਸਵੀਰ ਅਪਲੋਡ ਕਰੋ।",
+                dropzoneText: "ਤਸਵੀਰ ਇੱਥੇ ਖਿੱਚੋ ਅਤੇ ਛੱਡੋ ਜਾਂ ਚੁਣਨ ਲਈ ਕਲਿੱਕ ਕਰੋ",
+                addToChat: "ਚੈਟ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ",
+                welcomeMsg: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਅਰੋਗਿਆਲਿੰਕ ਹਾਂ, ਤੁਹਾਡਾ ਏਆਈ ਸਿਹਤ ਸਾਥੀ। ਅੱਜ ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?",
+                aiDiagnosis: "ਏਆਈ ਨਿਦਾਨ",
+                statusLabel: "ਚਮੜੀ ਵਿਸ਼ਲੇਸ਼ਣ ਨਤੀਜਾ"
+            },
+            ml: {
+                title: "ആരോഗ്യലിങ്ക്",
+                subtitle: "നിങ്ങളുടെ വ്യക്തിഗത ആരോഗ്യ കൂട്ടാളി",
+                placeholder: "നിങ്ങളുടെ ആരോഗ്യത്തെക്കുറിച്ച് എന്തും ചോദിക്കുക...",
+                sidebarHistory: "സംഭാഷണ ചരിത്രം",
+                sidebarNewChat: "പുതിയ ചാറ്റ്",
+                hudTitle: "ചർമ്മ പ്രശ്നം വിശകലനം ചെയ്യുക",
+                hudDesc: "പ്രാദേശികമായി ചർമ്മത്തിന്റെ അവസ്ഥ പ്രവചിക്കാൻ ബാധിത പ്രദേശത്തിന്റെ ചിത്രം അപ്‌ലോഡ് ചെയ്യുക.",
+                dropzoneText: "ചിത്രം ഇവിടെ വലിച്ചിടുക അല്ലെങ്കിൽ തിരഞ്ഞെടുക്കാൻ ക്ലിക്ക് ചെയ്യുക",
+                addToChat: "ചാറ്റിലേക്ക് ചേർക്കുക",
+                welcomeMsg: "ഹലോ! ഞാൻ ആരോഗ്യലിങ്ക്, നിങ്ങളുടെ എഐ ആരോഗ്യ കൂട്ടാളി. ഇന്ന് ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കണം?",
+                aiDiagnosis: "എഐ രോഗനിർണയം",
+                statusLabel: "ചർമ്മ വിശകലന ഫലം"
+            }
+        };
+
+        // ==========================================
+        // INITIALIZATION & WELCOME STATE MACHINE
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            setupParallax();
+            setupDragAndDrop();
+            initConversations();
+            
+            // Check if language preference already committed
+            const storedLang = localStorage.getItem('selected_lang');
+            if (storedLang) {
+                currentLanguage = storedLang;
+                changeLanguage(storedLang);
+                
+                // Bypass welcome gate overlay directly
+                const gate = document.getElementById('welcome-gate');
+                gate.style.display = 'none';
+                
+                const consoleEl = document.getElementById('main-console');
+                consoleEl.style.opacity = '1';
+                consoleEl.style.pointerEvents = 'auto';
+                consoleEl.style.transform = 'translateY(0)';
+                
+                loadChatHistory();
+            } else {
+                startWelcomeTicker();
+            }
+
+            // Load Teachable Machine Weight Assets
+            loadTeachableModel();
+        });
+
+        // 1. Ambient Parallax coordinate tracking
+        function setupParallax() {
+            window.addEventListener('mousemove', (e) => {
+                const dx = (e.clientX - window.innerWidth / 2) * 0.05;
+                const dy = (e.clientY - window.innerHeight / 2) * 0.05;
+                const container = document.getElementById('fluid-canvas-container');
+                if (container) {
+                    container.style.setProperty('--mouse-x', `${dx}px`);
+                    container.style.setProperty('--mouse-y', `${dy}px`);
+                }
+            });
+        }
+
+        // 2. Cross-fade text rotation loop
+        let tickerIndex = 0;
+        function startWelcomeTicker() {
+            const tickerEl = document.getElementById('ticker-text');
+            if (!tickerEl) return;
+            
+            tickerInterval = setInterval(() => {
+                tickerEl.classList.remove('fade-in');
+                tickerEl.classList.add('fade-out');
+                
+                setTimeout(() => {
+                    tickerIndex = (tickerIndex + 1) % tickerPhrases.length;
+                    tickerEl.textContent = tickerPhrases[tickerIndex].text;
+                    tickerEl.classList.remove('fade-out');
+                    tickerEl.classList.add('fade-in');
+                }, 300);
+            }, 1500);
+        }
+
+        // 3. Selection Sequence handler
+        function selectLanguage(langToken) {
+            localStorage.setItem('selected_lang', langToken);
+            currentLanguage = langToken;
+            
+            if (tickerInterval) {
+                clearInterval(tickerInterval);
+            }
+            
+            // Repaint visual interface nodes
+            changeLanguage(langToken);
+            
+            // Cinematic spring scaling layout transition
+            const gate = document.getElementById('welcome-gate');
+            const consoleEl = document.getElementById('main-console');
+            
+            gate.style.opacity = '0';
+            gate.style.pointerEvents = 'none';
+            gate.style.transform = 'scale(0.95)';
+            
+            consoleEl.style.opacity = '1';
+            consoleEl.style.pointerEvents = 'auto';
+            consoleEl.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+                gate.style.display = 'none';
+            }, 600);
+            
+            // Set up initial message in active chat
+            loadChatHistory();
+        }
+
+        // ==========================================
+        // THEME & TRANSLATION REPAINT LOOPS
+        // ==========================================
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            
+            const icon = document.getElementById('theme-toggle-icon');
+            icon.textContent = newTheme === 'light' ? 'dark_mode' : 'light_mode';
+        }
+
+        function changeLanguage(langToken) {
+            // Apply language dictionary values
+            const dict = LOCALIZATION[langToken] || LOCALIZATION['en'];
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) {
+                    el.textContent = dict[key];
+                }
+            });
+            
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (dict[key]) {
+                    el.setAttribute('placeholder', dict[key]);
+                }
+            });
+            
+            // Shifting Color Profiles on background wrapper
+            updateBackgroundProfile(langToken);
+            
+            // Synchronize active highlights in dropdown triggers
+            document.querySelectorAll('.lang-dropdown-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            const activeOpt = document.getElementById(`opt-${langToken}`);
+            if (activeOpt) {
+                activeOpt.classList.add('active');
+            }
+        }
+
+        function updateBackgroundProfile(langToken) {
+            const wrappers = {
+                en: document.getElementById('profile-a-wrapper'),
+                hi: document.getElementById('profile-b-wrapper'),
+                others: document.getElementById('profile-c-wrapper')
+            };
+            
+            // Remove active profile displays
+            Object.values(wrappers).forEach(wrap => {
+                if (wrap) wrap.classList.remove('active');
+            });
+            
+            if (langToken === 'en') {
+                wrappers.en.classList.add('active');
+            } else if (langToken === 'hi') {
+                wrappers.hi.classList.add('active');
+            } else {
+                wrappers.others.classList.add('active');
+            }
+        }
+
+        // Inline Selector Dropdown inside Input Capsule
+        function toggleInlineLangDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('inline-lang-dropdown');
+            const trigger = document.getElementById('inline-lang-trigger');
+            
+            const isShown = dropdown.classList.contains('show');
+            if (isShown) {
+                dropdown.classList.remove('show');
+                trigger.classList.remove('active');
+            } else {
+                dropdown.classList.add('show');
+                trigger.classList.add('active');
+                
+                // Close when clicking outside
+                document.addEventListener('click', closeDropdownOutside);
+            }
+        }
+
+        function closeDropdownOutside(e) {
+            const dropdown = document.getElementById('inline-lang-dropdown');
+            const trigger = document.getElementById('inline-lang-trigger');
+            if (dropdown && !dropdown.contains(e.target) && e.target !== trigger) {
+                dropdown.classList.remove('show');
+                trigger.classList.remove('active');
+                document.removeEventListener('click', closeDropdownOutside);
+            }
+        }
+
+        function selectLanguageInline(langToken) {
+            currentLanguage = langToken;
+            changeLanguage(langToken);
+            
+            const dropdown = document.getElementById('inline-lang-dropdown');
+            dropdown.classList.remove('show');
+            
+            const trigger = document.getElementById('inline-lang-trigger');
+            trigger.classList.remove('active');
+        }
+
+        // ==========================================
+        // TEACHABLE MACHINE LOCAL COMPUTER PIPELINE
+        // ==========================================
+        async function loadTeachableModel() {
+            const badge = document.getElementById('model-badge');
+            try {
+                const modelURL = MODEL_BASE + "model.json";
+                const metadataURL = MODEL_BASE + "metadata.json";
+                teachableModel = await tmImage.load(modelURL, metadataURL);
+                isModelLoaded = true;
+                
+                badge.textContent = "🤖 Local AI: Active";
+                badge.style.background = "rgba(16, 185, 129, 0.2)";
+                badge.style.color = "#10b981";
+                console.log("Teachable Machine weights loaded locally.");
+            } catch (err) {
+                badge.textContent = "🤖 Local AI: Error loading";
+                badge.style.background = "rgba(220, 38, 38, 0.2)";
+                badge.style.color = "#ef4444";
+                console.error("Local Teachable Machine model weight load error: ", err);
+            }
+        }
+
+        function setupDragAndDrop() {
+            const dropzone = document.getElementById('skin-hud-panel');
+            if (!dropzone) return;
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropzone.style.background = 'rgba(59, 130, 246, 0.04)';
+                    dropzone.style.borderColor = '#3b82f6';
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropzone.style.background = '';
+                    dropzone.style.borderColor = '';
+                }, false);
+            });
+            
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    processUploadedImage(files[0]);
+                }
+            }, false);
+        }
+
+        // Dropzone interaction routing
+        function triggerFileInput() {
+            document.getElementById('skin-file-input').click();
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                processUploadedImage(files[0]);
+            }
+        }
+
+        function processUploadedImage(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file.');
+                return;
+            }
+            
+            const previewImg = document.getElementById('skin-preview-img');
+            const previewArea = document.getElementById('hud-preview-area');
+            
+            // Create offscreen image just like teachable.html to prevent display none layout bugs
+            const tempImg = new Image();
+            const localURL = URL.createObjectURL(file);
+            
+            tempImg.onload = async () => {
+                // Set visible preview source
+                previewImg.src = localURL;
+                
+                // Display preview wrapper area
+                previewArea.style.display = 'grid';
+                
+                // Execute local model predict pipeline
+                await runLocalInference(tempImg);
+                
+                // Revoke object URL after analysis completes
+                URL.revokeObjectURL(localURL);
+            };
+            tempImg.src = localURL;
+        }
+
+        // Localized Model weight predict loops
+        async function runLocalInference(imgElement) {
+            if (!isModelLoaded || !teachableModel) {
+                await loadTeachableModel();
+                if (!teachableModel) {
+                    document.getElementById('skin-status-value').textContent = "Model weights failed to load";
+                    return;
+                }
+            }
+            
+            // Accelerate heartbeat pulses of orb containers
+            toggleOrbBreathing(true);
+            
+            try {
+                // Decode texture fully
+                if (typeof imgElement.decode === 'function') {
+                    await imgElement.decode();
+                }
+                
+                const predictions = await teachableModel.predict(imgElement);
+                
+                // Parse predictions to extract ONLY top prediction score label
+                const topPrediction = predictions.reduce((prev, current) => {
+                    return (prev.probability > current.probability) ? prev : current;
+                });
+                
+                const skinProblem = topPrediction.className;
+                
+                // Repaint value string inside frosted HUD bar
+                const statusValueEl = document.getElementById('skin-status-value');
+                statusValueEl.textContent = skinProblem;
+                
+                // Dynamic Action Button synthesis wiring
+                const addBtn = document.getElementById('add-to-chat-btn');
+                addBtn.onclick = () => handleAddToChatSequence(skinProblem);
+                
+            } catch (err) {
+                console.error("Local Teachable Machine prediction execution failed: ", err);
+                document.getElementById('skin-status-value').textContent = "Prediction error: " + err.message;
+            } finally {
+                // Decelerate pulses
+                toggleOrbBreathing(false);
+            }
+        }
+
+        // Change heartbeat pulses of orb containers
+        function toggleOrbBreathing(accelerate) {
+            const orbWelcome = document.getElementById('welcome-orb');
+            const orbConsole = document.getElementById('console-orb');
+            
+            [orbWelcome, orbConsole].forEach(orb => {
+                if (orb) {
+                    if (accelerate) {
+                        orb.classList.remove('orb-pulsing');
+                        orb.classList.add('orb-pulsing-fast');
+                    } else {
+                        orb.classList.remove('orb-pulsing-fast');
+                        orb.classList.add('orb-pulsing');
+                    }
+                }
+            });
+        }
+
+        // Automated text prompt injection sequence - MANUAL submission by clicking send
+        function handleAddToChatSequence(skinProblem) {
+            const textPrompt = `The user is suffering from ${skinProblem}, suggest cures`;
+            
+            const messageInput = document.getElementById('messageInput');
+            messageInput.value = textPrompt;
+            
+            // Auto-grow size metrics of textarea
+            messageInput.style.height = 'auto';
+            messageInput.style.height = messageInput.scrollHeight + 'px';
+            messageInput.focus();
+        }
+
+        // ==========================================
+        // CHAT ENGINE & PERSISTED HISTORY
+        // ==========================================
+        function initConversations() {
+            const saved = localStorage.getItem('aarogya_conversations');
+            const savedActive = localStorage.getItem('aarogya_active_chat');
+            
+            if (saved) {
+                conversations = JSON.parse(saved);
+                currentChatId = savedActive || Object.keys(conversations)[0];
+            } else {
+                startNewChat();
+            }
+        }
+
+        function saveConversations() {
+            localStorage.setItem('aarogya_conversations', JSON.stringify(conversations));
+            localStorage.setItem('aarogya_active_chat', currentChatId);
+        }
+
+        function startNewChat() {
+            currentChatId = 'chat_' + Date.now();
+            
+            const dict = LOCALIZATION[currentLanguage] || LOCALIZATION['en'];
+            
+            conversations[currentChatId] = {
+                title: dict.sidebarNewChat + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                messages: [
+                    { role: 'ai', content: dict.welcomeMsg }
+                ]
+            };
+            
+            saveConversations();
+            renderSidebarHistory();
+            loadChatHistory();
+        }
+
+        function renderSidebarHistory() {
+            const container = document.getElementById('history-list-container');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            // Sort conversations chronologically (newest first)
+            const sortedIds = Object.keys(conversations).sort((a, b) => b.localeCompare(a));
+            
+            sortedIds.forEach(id => {
+                const chat = conversations[id];
+                const item = document.createElement('div');
+                item.className = `history-item ${id === currentChatId ? 'active' : ''}`;
+                item.onclick = () => selectActiveChat(id);
+                
+                item.innerHTML = `
+                    <span class="material-symbols-outlined" style="font-size:18px;">chat</span>
+                    <span style="overflow:hidden; text-overflow:ellipsis;">${chat.title}</span>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        function selectActiveChat(id) {
+            currentChatId = id;
+            saveConversations();
+            renderSidebarHistory();
+            loadChatHistory();
+        }
+
+        function loadChatHistory() {
+            const viewport = document.getElementById('chat-viewport-wrapper');
+            if (!viewport) return;
+            
+            viewport.innerHTML = '';
+            
+            const activeChat = conversations[currentChatId];
+            if (!activeChat) return;
+            
+            activeChat.messages.forEach(msg => {
+                appendMessageBubble(msg.content, msg.role === 'user');
+            });
+            
+            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        }
+
+        function appendMessageBubble(text, isUser = false) {
+            const viewport = document.getElementById('chat-viewport-wrapper');
+            if (!viewport) return null;
+            
+            const msgRow = document.createElement('div');
+            msgRow.className = `message-row ${isUser ? 'user' : 'ai'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            
+            if (isUser) {
+                bubble.innerHTML = `<p>${escapeHTML(text).replace(/\n/g, '<br>')}</p>`;
+            } else {
+                bubble.innerHTML = formatAIResponseText(text);
+            }
+            
+            msgRow.appendChild(bubble);
+            viewport.appendChild(msgRow);
+            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+            
+            return bubble;
+        }
+
+        function escapeHTML(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatAIResponseText(text) {
+            // Basic markdown bolding and line break formatting for health responses
+            let formatted = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+                
+            return `<p>${formatted}</p>`;
+        }
+
+        // Post submission loop to our Flask Endpoint
+        async function sendTextMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Append and store user input
+            appendMessageBubble(message, true);
+            conversations[currentChatId].messages.push({ role: 'user', content: message });
+            
+            // Rename chat title if it's the first user message
+            if (conversations[currentChatId].messages.length === 3) {
+                conversations[currentChatId].title = message.slice(0, 24) + (message.length > 24 ? '...' : '');
+                renderSidebarHistory();
+            }
+            
+            // Clear input box
+            messageInput.value = '';
+            messageInput.style.height = '24px'; // reset height
+            
+            // Add AI bubble with loading indicator
+            const aiBubble = appendMessageBubble('', false);
+            aiBubble.innerHTML = `
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            
+            // Accelerate orb pulse during processing
+            toggleOrbBreathing(true);
+            document.body.classList.add('ai-thinking');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        language: currentLanguage
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.response) {
+                    conversations[currentChatId].messages.push({ role: 'ai', content: data.response });
+                    saveConversations();
+                    
+                    // Render streaming response word-by-word into the bubble
+                    streamMessageResponse(aiBubble, data.response);
+                } else {
+                    aiBubble.innerHTML = `<p style="color:#ef4444;">Error: Unable to fetch advice. Please try again.</p>`;
+                    toggleOrbBreathing(false);
+                    document.body.classList.remove('ai-thinking');
+                }
+            } catch (err) {
+                console.error("Fetch API chat server connection failed: ", err);
+                aiBubble.innerHTML = `<p style="color:#ef4444;">Error: Connection to health engine failed. Ensure backend is running.</p>`;
+                toggleOrbBreathing(false);
+                document.body.classList.remove('ai-thinking');
+            }
+        }
+
+        // Simulate a word-by-word streaming effect inside deep-frosted bubbles
+        function streamMessageResponse(bubbleElement, text) {
+            const words = text.split(' ');
+            let idx = 0;
+            bubbleElement.innerHTML = '';
+            
+            // Slow down pulsing once rendering is finished
+            function showNext() {
+                if (idx < words.length) {
+                    bubbleElement.innerHTML += (idx === 0 ? '' : ' ') + words[idx];
+                    idx++;
+                    
+                    const viewport = document.getElementById('chat-viewport-wrapper');
+                    viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+                    
+                    setTimeout(showNext, 25); // 25ms delay per word for smooth flow
+                } else {
+                    // Repaint once with structural bolding
+                    bubbleElement.innerHTML = formatAIResponseText(text);
+                    toggleOrbBreathing(false);
+                    document.body.classList.remove('ai-thinking');
+                }
+            }
+            showNext();
+        }
+
+        // Keyboard interaction adjustments
+        function handleInputKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendTextMessage();
+            }
+        }
+
+        function setInputFocus(isFocused) {
+            const inputCapsule = document.getElementById('input-capsule-container');
+            if (isFocused) {
+                inputCapsule.classList.add('focused');
+            } else {
+                inputCapsule.classList.remove('focused');
+            }
+        }
+    </script>
+</body>
+</html>

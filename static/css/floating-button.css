@@ -1,0 +1,117 @@
+/* Floating Get Started Button Styles */
+.floating-cta {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.8);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.floating-cta.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.floating-cta-button {
+    background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, var(--md-sys-color-secondary) 100%);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    border-radius: 56px;
+    padding: 20px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(103, 80, 164, 0.4);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 180px;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    overflow: hidden;
+}
+
+.floating-cta-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s;
+}
+
+.floating-cta-button:hover::before {
+    left: 100%;
+}
+
+.floating-cta-button:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 12px 40px rgba(103, 80, 164, 0.5);
+    background: linear-gradient(135deg, var(--md-sys-color-secondary) 0%, var(--md-sys-color-primary) 100%);
+}
+
+.floating-cta-button:active {
+    transform: translateY(-2px) scale(0.98);
+}
+
+.floating-cta-button .material-symbols-outlined {
+    font-size: 24px;
+    animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+/* Pulse animation when first shown */
+.floating-cta.pulse .floating-cta-button {
+    animation: pulseGlow 2s ease-in-out;
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 8px 32px rgba(103, 80, 164, 0.4);
+    }
+    50% {
+        box-shadow: 0 8px 32px rgba(103, 80, 164, 0.8), 0 0 40px rgba(103, 80, 164, 0.6);
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .floating-cta {
+        bottom: 24px;
+        right: 24px;
+    }
+    
+    .floating-cta-button {
+        padding: 16px 24px;
+        font-size: 14px;
+        min-width: 150px;
+    }
+}
+
+/* Dark theme adjustments */
+html[data-theme=\"dark\"] .floating-cta-button {
+    box-shadow: 0 8px 32px rgba(208, 188, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme=\"dark\"] .floating-cta-button:hover {
+    box-shadow: 0 12px 40px rgba(208, 188, 255, 0.4);
+}

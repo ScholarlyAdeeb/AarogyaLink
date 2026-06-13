@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Teachable Machine Debug Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .test-header {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        
+        .status.success { background: #10b981; }
+        .status.error { background: #ef4444; }
+        .status.warning { background: #f59e0b; }
+        .status.info { background: #3b82f6; }
+        
+        button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        button:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .log-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .prediction-result {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .prediction-item {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .radial-progress {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #10b981 calc(var(--percentage) * 1%), 
+                rgba(255, 255, 255, 0.3) 0
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            position: relative;
+        }
+        
+        .radial-progress::before {
+            content: '';
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            position: absolute;
+        }
+        
+        .radial-progress-text {
+            position: relative;
+            z-index: 1;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        input[type="file"] {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            width: 100%;
+        }
+        
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+    
+    <!-- TensorFlow.js and Teachable Machine -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔧 Teachable Machine Debug Tool</h1>
+        
+        <!-- Library Check -->
+        <div class="test-section">
+            <div class="test-header">📚 Library Status</div>
+            <div id="libraryStatus">Checking...</div>
+            <button onclick="checkLibraries()">🔍 Check Libraries</button>
+        </div>
+        
+        <!-- Model Loading -->
+        <div class="test-section">
+            <div class="test-header">🤖 Model Loading</div>
+            <div id="modelStatus">Not loaded</div>
+            <button onclick="loadModel()" id="loadModelBtn">📥 Load Model</button>
+            <div class="log-area" id="modelLog"></div>
+        </div>
+        
+        <!-- Image Testing -->
+        <div class="test-section">
+            <div class="test-header">🖼️ Image Analysis</div>
+            <input type="file" id="imageInput" accept="image/*" onchange="handleImageTest(event)">
+            <div id="imagePreview"></div>
+            <div id="predictionResults"></div>
+            <button onclick="runTestImage()" id="testImageBtn" disabled>🧪 Test with Sample Image</button>
+        </div>
+        
+        <!-- Webcam Testing -->
+        <div class="test-section">
+            <div class="test-header">📹 Webcam Testing</div>
+            <div id="webcamStatus">Not started</div>
+            <button onclick="testWebcam()" id="webcamBtn">📷 Test Webcam</button>
+            <div id="webcamContainer"></div>
+        </div>
+        
+        <!-- Backend Connectivity -->
+        <div class="test-section">
+            <div class="test-header">🔗 Backend Connectivity</div>
+            <div id="backendStatus">Not tested</div>
+            <button onclick="testBackend()">🌐 Test Backend</button>
+        </div>
+        
+        <!-- System Info -->
+        <div class="test-section">
+            <div class="test-header">ℹ️ System Information</div>
+            <div id="systemInfo">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const MODEL_BASE = "https://teachablemachine.withgoogle.com/models/ebiM39JYb/";
+        const API_BASE_URL = 'http://localhost:5000';
+        
+        let teachableModel = null;
+        let maxPredictions = 0;
+        let modelLoaded = false;
+        let webcam = null;
+        
+        // Utility functions
+        function log(message, elementId = 'modelLog') {
+            const logElement = document.getElementById(elementId);
+            if (logElement) {
+                logElement.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+            console.log(message);
+        }
+        
+        function setStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = `<span class="status ${type}">${message}</span>`;
+            }
+        }
+        
+        // Check libraries
+        function checkLibraries() {
+            let status = [];
+            
+            if (typeof tf !== 'undefined') {
+                status.push('<span class="status success">✅ TensorFlow.js loaded</span>');
+                status.push(`<div>TensorFlow version: ${tf.version.tfjs}</div>`);
+            } else {
+                status.push('<span class="status error">❌ TensorFlow.js NOT loaded</span>');
+            }
+            
+            if (typeof tmImage !== 'undefined') {
+                status.push('<span class="status success">✅ Teachable Machine library loaded</span>');
+            } else {
+                status.push('<span class="status error">❌ Teachable Machine library NOT loaded</span>');
+            }
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                status.push('<span class="status success">✅ Webcam API supported</span>');
+            } else {
+                status.push('<span class="status warning">⚠️ Webcam API not supported</span>');
+            }
+            
+            document.getElementById('libraryStatus').innerHTML = status.join('<br>');
+        }
+        
+        // Load model
+        async function loadModel() {
+            try {
+                setStatus('modelStatus', 'Loading...', 'info');
+                log('Starting model load...');
+                
+                const modelURL = MODEL_BASE + "model.json";
+                const metadataURL = MODEL_BASE + "metadata.json";
+                
+                log(`Model URL: ${modelURL}`);
+                log(`Metadata URL: ${metadataURL}`);
+                
+                if (typeof tmImage === 'undefined') {
+                    throw new Error('Teachable Machine library not loaded');
+                }
+                
+                teachableModel = await tmImage.load(modelURL, metadataURL);
+                maxPredictions = teachableModel.getTotalClasses();
+                modelLoaded = true;
+                
+                setStatus('modelStatus', `✅ Model loaded (${maxPredictions} classes)`, 'success');
+                log(`Model loaded successfully with ${maxPredictions} classes`);
+                
+                document.getElementById('testImageBtn').disabled = false;
+                
+            } catch (error) {
+                setStatus('modelStatus', '❌ Failed to load model', 'error');
+                log(`Error loading model: ${error.message}`);
+                console.error('Model loading error:', error);
+            }
+        }
+        
+        // Handle image test
+        async function handleImageTest(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const preview = document.getElementById('imagePreview');
+            const img = document.createElement('img');
+            img.className = 'image-preview';
+            img.file = file;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                img.src = e.target.result;
+                preview.innerHTML = '';
+                preview.appendChild(img);
+                
+                // Auto-predict if model is loaded
+                if (modelLoaded) {
+                    setTimeout(() => predictImage(img), 500);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Predict image
+        async function predictImage(imageElement) {
+            if (!teachableModel) {
+                log('Model not loaded for prediction');
+                return;
+            }
+            
+            try {
+                log('Running prediction...');
+                const prediction = await teachableModel.predict(imageElement);
+                displayPredictions(prediction);
+            } catch (error) {
+                log(`Prediction error: ${error.message}`);
+                console.error('Prediction error:', error);
+            }
+        }
+        
+        // Display predictions
+        function displayPredictions(predictions) {
+            const container = document.getElementById('predictionResults');
+            container.innerHTML = '<h4>🎯 Prediction Results:</h4>';
+            
+            const resultsDiv = document.createElement('div');
+            resultsDiv.className = 'prediction-result';
+            
+            // Sort predictions by confidence
+            const sortedPredictions = predictions
+                .sort((a, b) => b.probability - a.probability)
+                .slice(0, 5);
+            
+            sortedPredictions.forEach(pred => {
+                const percentage = Math.round(pred.probability * 100);
+                
+                const item = document.createElement('div');
+                item.className = 'prediction-item';
+                item.innerHTML = `
+                    <div class="radial-progress" style="--percentage: ${percentage}">
+                        <div class="radial-progress-text">${percentage}%</div>
+                    </div>
+                    <div style="font-size: 12px; font-weight: bold;">${pred.className}</div>
+                `;
+                
+                resultsDiv.appendChild(item);
+            });
+            
+            container.appendChild(resultsDiv);
+            log(`Displayed ${sortedPredictions.length} predictions`);
+        }
+        
+        // Test with sample image
+        function runTestImage() {
+            // Create a test canvas with a simple pattern
+            const canvas = document.createElement('canvas');
+            canvas.width = 224;
+            canvas.height = 224;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw a simple test pattern
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(0, 0, 224, 224);
+            ctx.fillStyle = '#4ecdc4';
+            ctx.fillRect(50, 50, 124, 124);
+            ctx.fillStyle = '#45b7d1';
+            ctx.fillRect(75, 75, 74, 74);
+            
+            // Add to preview
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            preview.appendChild(canvas);
+            
+            // Run prediction
+            predictImage(canvas);
+        }
+        
+        // Test webcam
+        async function testWebcam() {
+            try {
+                setStatus('webcamStatus', 'Requesting camera access...', 'info');
+                
+                if (!modelLoaded) {
+                    setStatus('webcamStatus', 'Load model first', 'warning');
+                    return;
+                }
+                
+                webcam = new tmImage.Webcam(200, 200, true);
+                await webcam.setup();
+                await webcam.play();
+                
+                document.getElementById('webcamContainer').appendChild(webcam.canvas);
+                setStatus('webcamStatus', '✅ Webcam active', 'success');
+                
+                // Start continuous prediction
+                webcamLoop();
+                
+            } catch (error) {
+                setStatus('webcamStatus', '❌ Webcam failed', 'error');
+                console.error('Webcam error:', error);
+            }
+        }
+        
+        async function webcamLoop() {
+            if (webcam) {
+                webcam.update();
+                await predictImage(webcam.canvas);
+                setTimeout(webcamLoop, 1000); // Predict every second
+            }
+        }
+        
+        // Test backend
+        async function testBackend() {
+            try {
+                setStatus('backendStatus', 'Testing connection...', 'info');
+                
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                
+                setStatus('backendStatus', '✅ Backend connected', 'success');
+                console.log('Backend response:', data);
+                
+            } catch (error) {
+                setStatus('backendStatus', '❌ Backend not available', 'error');
+                console.error('Backend error:', error);
+            }
+        }
+        
+        // Initialize
+        function init() {
+            // System info
+            const systemInfo = [
+                `User Agent: ${navigator.userAgent}`,
+                `Platform: ${navigator.platform}`,
+                `Language: ${navigator.language}`,
+                `Online: ${navigator.onLine}`,
+                `Screen: ${screen.width}x${screen.height}`,
+                `Viewport: ${window.innerWidth}x${window.innerHeight}`
+            ];
+            
+            document.getElementById('systemInfo').innerHTML = systemInfo.join('<br>');
+            
+            // Auto-check libraries
+            checkLibraries();
+            
+            // Auto-load model
+            setTimeout(loadModel, 1000);
+        }
+        
+        // Start when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

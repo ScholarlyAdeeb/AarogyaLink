@@ -191,29 +191,49 @@ def test_upload_too_large_is_413(client, fake):
 
 
 # --- Nearby care ------------------------------------------------------------
-GROUNDED_URL = "https://maps.google.com/?cid=111"
+GROUNDED_URL = "https://maps.google.com/maps?cid=111"
+# Shape of a real Maps grounding record (trimmed).
+GROUNDED_RECORD = (
+    "**Title:** Sunrise Skin Clinic\n\n**About:**\n\n"
+    "* **Address:** 12 MG Road, Bengaluru, Karnataka 560001, India\n"
+    "* **Rating:** 4.5 (123 reviews)\n"
+    "* **Phone:** +91 98765 43210\n"
+)
 
 
-def grounded_response(text):
+def grounded_response(text, record=GROUNDED_RECORD):
     return {"candidates": [{
         "content": {"parts": [{"text": text}]},
-        "groundingMetadata": {"groundingChunks": [{"maps": {"uri": GROUNDED_URL, "title": "Sunrise Skin Clinic"}}]},
+        "groundingMetadata": {"groundingChunks": [{"maps": {
+            "uri": GROUNDED_URL, "title": "Sunrise Skin Clinic - Google Maps", "text": record,
+        }}]},
     }]}
 
 
 def test_nearby_care_keeps_only_grounded_places(client, fake):
     fake.response = grounded_response(
-        "Wrong Name | Dermatologist | MG Road | +91 98765 43210 | " + GROUNDED_URL + "\n"
+        "Wrong Name | Dermatologist | Wrong Street | +91 98765 43210 | " + GROUNDED_URL + "\n"
         "Made Up Hospital | General | Nowhere | +91 11111 11111 | https://maps.google.com/?cid=999"
     )
     body = client.post('/api/nearby-care', json={"lat": 28.61392, "lng": 77.20902, "concern": "rash"}).get_json()
     assert len(body['places']) == 1
     place = body['places'][0]
-    assert place['name'] == 'Sunrise Skin Clinic'     # name comes from grounding, not model text
+    # Name, address and phone come from the Maps record, not the model's text.
+    assert place['name'] == 'Sunrise Skin Clinic'
+    assert place['address'] == '12 MG Road, Bengaluru, Karnataka 560001, India'
     assert place['phone'] == '+91 98765 43210'
     # Coordinates are coarsened before they leave the server.
     sent = fake.payloads[0]['toolConfig']['retrievalConfig']['latLng']
     assert sent == {"latitude": 28.614, "longitude": 77.209}
+
+
+def test_nearby_care_drops_phone_missing_from_maps_record(client, fake):
+    record_without_phone = "**Title:** Sunrise Skin Clinic\n* **Address:** 12 MG Road\n"
+    fake.response = grounded_response(
+        "Sunrise | Dermatologist | 12 MG Road | +91 99999 88888 | " + GROUNDED_URL, record=record_without_phone,
+    )
+    place = client.post('/api/nearby-care', json={"lat": 1, "lng": 1}).get_json()['places'][0]
+    assert place['phone'] is None
 
 
 def test_nearby_care_offers_search_link_when_nothing_grounded(client, fake):

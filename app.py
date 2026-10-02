@@ -58,7 +58,7 @@ def env_int(name, default):
 
 # --- Configuration ------------------------------------------------------------
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '').strip()
-GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash').strip()
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-3.5-flash-lite').strip()
 GEMINI_REST_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 GEMINI_TIMEOUT = (5, 30)        # (connect, read) seconds
 GEMINI_MAX_ATTEMPTS = 2
@@ -489,14 +489,23 @@ def fallback_search_url(lat, lng):
     return f"https://www.google.com/maps/search/{quote('clinic hospital')}/@{lat},{lng},14z"
 
 
+def digits_only(value):
+    return re.sub(r"\D", "", value or "")
+
+
+def grounded_field(record_text, label):
+    """Read a '**Label:** value' line from a Maps grounding record."""
+    match = re.search(r"\*\*" + re.escape(label) + r":\*\*\s*(.+)", record_text or '')
+    return match.group(1).strip() if match else None
+
+
 class NearbyCareService:
     """Finds real clinics near the user's coordinates using Maps grounding.
 
-    A place is shown only if its Google Maps link is one that grounding
-    returned, and its name is taken from the grounding record rather than from
-    the model's text. Grounding metadata does not carry phone numbers, so a
-    phone number is format-checked but cannot be verified against Maps; the UI
-    presents it as a convenience and tells users to confirm details.
+    The model's reply is only used to pick and order places. Every field shown
+    to the user is checked against the grounding record Google Maps returned
+    for that place: the map link must match exactly, the name and address come
+    from the record, and a phone number is kept only if the record contains it.
     """
 
     def __init__(self, client):
@@ -539,7 +548,9 @@ class NearbyCareService:
             source = chunk.get('maps') or chunk.get('web') or {}
             uri = (source.get('uri') or '').split()
             if uri and uri[0].startswith(("https://maps.google.com", "https://www.google.com/maps")):
-                grounded[uri[0]] = (source.get('title') or '').strip()
+                title = (source.get('title') or '').strip()
+                title = re.sub(r"\s*-\s*Google Maps$", "", title)
+                grounded[uri[0]] = {"title": title, "text": source.get('text') or ''}
 
         if not grounded:
             logger.warning("Maps grounding returned no place links; offering a search link instead.")
@@ -562,16 +573,26 @@ class NearbyCareService:
             maps_url = extract_maps_url(fields[4], grounded)
             if not maps_url or maps_url in seen:
                 continue
-            name = grounded.get(maps_url) or fields[0]
+            record = grounded[maps_url]
+            name = record['title'] or fields[0]
             if len(name) < 3:
                 continue
             seen.add(maps_url)
 
+            # Prefer the number from the Maps record; accept the model's number
+            # only if the record contains the same digits.
+            phone = clean_phone(grounded_field(record['text'], 'Phone'))
+            model_phone = clean_phone(fields[3])
+            if not phone and model_phone and digits_only(model_phone) in digits_only(record['text']):
+                phone = model_phone
+            elif not phone and model_phone:
+                logger.info("Dropped a phone number that is not in the Maps record")
+
             places.append({
                 "name": name,
                 "specialty": fields[1] or None,
-                "address": fields[2] or None,
-                "phone": clean_phone(fields[3]),
+                "address": grounded_field(record['text'], 'Address') or fields[2] or None,
+                "phone": phone,
                 "maps_url": maps_url,
             })
             if len(places) == NEARBY_RESULT_LIMIT:

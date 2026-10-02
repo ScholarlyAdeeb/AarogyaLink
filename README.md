@@ -324,6 +324,17 @@ web: gunicorn app:app --workers 1 --threads 8 --timeout 90 --bind 0.0.0.0:$PORT
 - Set `GEMINI_API_KEY` and `TRUST_PROXY_HOPS=1` on the platform.
 - Serve over **HTTPS**. Browsers allow camera capture and geolocation only on secure origins (or `localhost`).
 
+### Vercel
+
+Vercel detects the Flask `app` in `app.py` automatically. [`vercel.json`](vercel.json) only raises the function timeout to 90 s (longer than a Gemini call plus its retry) and keeps tests and design files out of the bundle.
+
+1. Import the repository in Vercel. No build command is needed.
+2. Under **Settings → Environment Variables**, add `GEMINI_API_KEY` and `TRUST_PROXY_HOPS=1`. `.env` is not deployed.
+3. Deploy. Vercel serves over HTTPS, so camera capture and location work.
+
+> [!NOTE]
+> On Vercel each function instance keeps its own rate-limit counters, so `RATE_LIMIT_PER_MINUTE` is a best-effort limit there. Use a shared store such as Upstash Redis if you need a strict one.
+
 ## Project structure
 
 ```
